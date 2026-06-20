@@ -34,6 +34,12 @@ def feedback(guess: str, target: str) -> Tuple[int, int, int, int, int]:
     return tuple(res)
 
 
+@lru_cache(maxsize=None)
+def feedback_code(guess: str, target: str) -> int:
+    """Return encoded feedback pattern as an int (cached)."""
+    return encode_feedback(feedback(guess, target))
+
+
 def encode_feedback(pat: Tuple[int, int, int, int, int]) -> int:
     """Encode 5-digit base-3 pattern to integer."""
     code = 0
@@ -63,24 +69,27 @@ def compute_positional_priors(candidates: List[str], answers: List[str]) -> Dict
 
 
 def expected_posterior_entropy(guess: str, possible_answers: List[str], priors: Dict[str, float]) -> float:
+    # pattern_weights: code -> total prior mass producing this pattern
     pattern_weights = {}
+    # map code -> list of (answer, prior) for that pattern (for posterior entropy)
+    pattern_members = {}
+    total_prior = 0.0
     for t in possible_answers:
-        pat = feedback(guess, t)
-        code = encode_feedback(pat)
-        pattern_weights[code] = pattern_weights.get(code, 0.0) + priors.get(t, 0.0)
-    total_prior = sum(priors.get(t, 0.0) for t in possible_answers) or 1.0
+        p = priors.get(t, 0.0)
+        total_prior += p
+        code = feedback_code(guess, t)
+        pattern_weights[code] = pattern_weights.get(code, 0.0) + p
+        pattern_members.setdefault(code, []).append((t, p))
+    if total_prior == 0.0:
+        return 0.0
 
     exp_entropy = 0.0
     for code, p_weight in pattern_weights.items():
         p_prob = p_weight / total_prior
-        # collect weights for this pattern
-        weights = []
-        for t in possible_answers:
-            if encode_feedback(feedback(guess, t)) == code:
-                weights.append(priors.get(t, 0.0))
-        wsum = sum(weights) or 1.0
+        members = pattern_members.get(code, [])
+        wsum = sum(p for _, p in members) or 1.0
         h = 0.0
-        for w in weights:
+        for _, w in members:
             q = w / wsum
             if q > 0:
                 h -= q * math.log2(q)
