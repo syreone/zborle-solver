@@ -208,18 +208,21 @@ def interactive_mode(answers_path: str = DEFAULT_ANSWERS, candidates_file: str =
         if len(possible) == 1:
             guess = possible[0]
         elif first_move:
-            print("Препорачани први потези (според позициона честота):")
-            for i, g in enumerate(top_first[:5], start=1):
+            # sample 5 recommendations from the top_pool so the choices vary each run
+            sample_count = min(5, len(top_pool))
+            sample_choices = random.sample(top_pool, k=sample_count)
+            print("Препорачани први потези (случајно избрани од топ-30):")
+            for i, g in enumerate(sample_choices, start=1):
                 print(f"  {i}. {g}")
-            izbor = input("Избери број (1-5) или Enter за прв: ").strip()
+            izbor = input(f"Избери број (1-{sample_count}) или Enter за прв: ").strip()
             if izbor == "" or izbor == "1":
-                guess = top_first[0]
+                guess = sample_choices[0]
             else:
                 try:
                     idx = int(izbor) - 1
-                    guess = top_first[idx] if 0 <= idx < 5 else top_first[0]
+                    guess = sample_choices[idx] if 0 <= idx < sample_count else sample_choices[0]
                 except ValueError:
-                    guess = top_first[0]
+                    guess = sample_choices[0]
             first_move = False
         else:
             # prefer guesses that match explicit green constraints stored in green_map
