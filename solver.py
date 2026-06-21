@@ -1,5 +1,6 @@
 import argparse
 import math
+import random
 import statistics
 from collections import Counter
 from functools import lru_cache
@@ -174,7 +175,23 @@ def interactive_mode(answers_path: str = DEFAULT_ANSWERS, candidates_file: str =
     pos_freq = compute_positional_freq(answers)
     def positional_score(w):
         return sum(pos_freq[i].get(w[i], 0) for i in range(5))
-    top_first = sorted(candidates, key=positional_score, reverse=True)[:10]
+    # Build a top pool (prefer words that are in the official answers corpus so
+    # suggestions are legitimate Macedonian words). Fall back to candidates if
+    # needed. We'll randomly sample 5 suggestions from this top-30 pool so the
+    # recommended first moves vary between runs.
+    answers_set = set(answers)
+    top_candidates = sorted(candidates, key=positional_score, reverse=True)
+    # prefer candidates that are in answers
+    preferred = [w for w in top_candidates if w in answers_set]
+    top_pool = preferred[:30]
+    if len(top_pool) < 30:
+        # fill with other top candidates
+        for w in top_candidates:
+            if w not in top_pool:
+                top_pool.append(w)
+            if len(top_pool) >= 30:
+                break
+    top_first = top_pool[:10]
 
     possible = answers[:]
     first_move = True
