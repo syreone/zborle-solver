@@ -1,5 +1,6 @@
 import argparse
 import math
+import random
 import statistics
 from collections import Counter
 from functools import lru_cache
@@ -174,7 +175,23 @@ def interactive_mode(answers_path: str = DEFAULT_ANSWERS, candidates_file: str =
     pos_freq = compute_positional_freq(answers)
     def positional_score(w):
         return sum(pos_freq[i].get(w[i], 0) for i in range(5))
-    top_first = sorted(candidates, key=positional_score, reverse=True)[:10]
+    # Build a top pool (prefer words that are in the official answers corpus so
+    # suggestions are legitimate Macedonian words). Fall back to candidates if
+    # needed. We'll randomly sample 5 suggestions from this top-30 pool so the
+    # recommended first moves vary between runs.
+    answers_set = set(answers)
+    top_candidates = sorted(candidates, key=positional_score, reverse=True)
+    # prefer candidates that are in answers
+    preferred = [w for w in top_candidates if w in answers_set]
+    top_pool = preferred[:30]
+    if len(top_pool) < 30:
+        # fill with other top candidates
+        for w in top_candidates:
+            if w not in top_pool:
+                top_pool.append(w)
+            if len(top_pool) >= 30:
+                break
+    top_first = top_pool[:10]
 
     possible = answers[:]
     first_move = True
@@ -191,18 +208,21 @@ def interactive_mode(answers_path: str = DEFAULT_ANSWERS, candidates_file: str =
         if len(possible) == 1:
             guess = possible[0]
         elif first_move:
-            print("Препорачани први потези (според позициона честота):")
-            for i, g in enumerate(top_first[:5], start=1):
+            # sample 5 recommendations from the top_pool so the choices vary each run
+            sample_count = min(5, len(top_pool))
+            sample_choices = random.sample(top_pool, k=sample_count)
+            print("Препорачани први потези (случајно избрани од топ-30):")
+            for i, g in enumerate(sample_choices, start=1):
                 print(f"  {i}. {g}")
-            izbor = input("Избери број (1-5) или Enter за прв: ").strip()
+            izbor = input(f"Избери број (1-{sample_count}) или Enter за прв: ").strip()
             if izbor == "" or izbor == "1":
-                guess = top_first[0]
+                guess = sample_choices[0]
             else:
                 try:
                     idx = int(izbor) - 1
-                    guess = top_first[idx] if 0 <= idx < 5 else top_first[0]
+                    guess = sample_choices[idx] if 0 <= idx < sample_count else sample_choices[0]
                 except ValueError:
-                    guess = top_first[0]
+                    guess = sample_choices[0]
             first_move = False
         else:
             # prefer guesses that match explicit green constraints stored in green_map
