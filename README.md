@@ -1,31 +1,35 @@
 # zborle-solver
 
-Macedonian Wordle-style solver and candidate generator.
+A Wordle-style solver for Macedonian (Zborle). This small, educational project
+generates candidate 5-letter words from a corpus using adjacency and mask rules,
+and chooses informative guesses with an entropy-based solver. It includes an
+interactive terminal UI with Wordle-style colored feedback and an explanation
+mode for why each guess was chosen.
 
-This project is a small, educational implementation that:
+Highlights
+- Rule-based candidate generator (bigrams/trigrams, masks)
+- Entropy-driven guess selection (expected posterior entropy)
+- Interactive terminal UI with colored blocks and explainable guesses
+- Simulation harness with per-answer CSV export and per-run memoization
 
-- Generates candidate 5-letter Macedonian strings from a corpus using bigram/tri-gram
-  adjacency rules and simple phonotactic filters (no hard lookup table of answers).
-- Scores candidates with a simple, interpretable positional prior and uses that prior
-  inside an entropy-based solver to pick informative guesses.
+Quick Start
+1. Clone the repo and enter the folder:
+   git clone https://github.com/syreone/zborle-solver.git
+   cd zborle-solver
 
-Quick start
-1. Build candidates (writes `candidates.txt`):
-   ```
-   python cli_build.py --corpus words-mk-main/all --out candidates.txt
-   ```
-2. Run the solver interactively:
-   ```
-   python solver.py interactive --answers words-mk-main/all --candidates candidates.txt
-   ```
+2. Create and activate a virtual environment (Windows example):
+   py -3 -m venv .venv
+   .venv\Scripts\activate
 
-Tests
-```
-python -m pytest -q
-```
+3. Install minimal dependencies:
+   pip install colorama pytest
 
-Files of interest
-- generator.py  - rule-based candidate generator (bigrams/trigrams, masks)
-- solver.py     - interactive solver and simulate harness
-- cli_build.py  - convenience script that writes candidates.txt from the corpus
-- tests/        - pytest tests for generator and solver
+   
+Interactive Usage
+- On start you'll see randomized first-move suggestions (sampled from a top-30 pool).
+- Pick a suggestion by entering its number (1–5) or press Enter to accept the default.
+- After each guess the program prints remaining candidate count and a Wordle-style
+  colored board of past guesses.
+- Feedback format: enter 5 digits (2=green, 1=yellow, 0=gray), e.g. `21002`.
+- Enter `s` at the feedback prompt to see an explanation for the current guess
+  (top feedback buckets, probabilities, example answers).
