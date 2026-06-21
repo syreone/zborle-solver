@@ -11,7 +11,7 @@ feedback (green/yellow/gray).
 
 - Rule-based candidate generator (bigrams/trigrams, vowel & rare-letter filters)
 - Entropy-based solver with positional-frequency prior
-- Interactive mode — play guesses against a real Zborle/Wordle game
+- Interactive mode — play guesses against a real Zborle(Wordle) game
 - Simulation mode — benchmark solver performance across the full answer list
 - Pytest suite for generator and solver
 - CI via GitHub Actions
