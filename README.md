@@ -77,15 +77,6 @@ explanation mode for why a guess was chosen.
   PY
   ```
 
-## Developer notes
-- Candidate generation (`generator.py`): grows sequences using pos-specific bigrams
-  and trigrams, and filters by simple phonotactics (vowel presence, rare-letter
-  limits, and mask patterns seen in the corpus).
-- Solver (`solver.py`): correct Wordle feedback semantics, expected-posterior-entropy
-  scoring with per-run memoization, and interactive UI with colored board and
-  explainability.
-- Tests: run `python -m pytest -q`.
-
 ## Requirements
 - Python 3.10+ recommended
 - Install dependencies:
@@ -96,25 +87,3 @@ explanation mode for why a guess was chosen.
   ```bash
   pip install colorama pytest
   ```
-
-## Roadmap & ideas
-- Use the CSV harness to compare strategies (IG-only vs IG+prior vs heuristics).
-- Expand the guess pool to the full corpus or a curated high-information set and
-  re-run experiments (memoization helps performance).
-- Improve candidate hygiene (filter or blacklist non-words found in generator output).
-- Add a simple web UI for clickable play and visualization (Flask/Streamlit).
-
-## Troubleshooting
-- If colored blocks don't render: use Windows Terminal or PowerShell, and ensure
-  `colorama` is installed in your active venv (`pip install colorama`).
-- If `python` is not found: install Python 3.10+ and add it to PATH; on Windows
-  you can also use the `py` launcher.
-
-## Contributing
-- Fork → branch → PR. Keep changes small and add tests for behavioral changes.
-
-## License
-- Add your chosen license (e.g., MIT) and include a LICENSE file at the repo root.
-
-## Acknowledgements
-- Educational project inspired by Wordle; thanks to contributors and language data sources.
