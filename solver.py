@@ -7,24 +7,23 @@ from typing import Dict, Iterable, List, Tuple
 import sys
 import os
 try:
-    import colorama
-    colorama.init(autoreset=True)
-    COLORAMA_AVAILABLE = True
+    from rich.console import Console
+    RICH_AVAILABLE = True
+    _console = Console()
 except Exception:
-    colorama = None
-    COLORAMA_AVAILABLE = False
+    RICH_AVAILABLE = False
 
 def detect_color_support() -> bool:
     if os.environ.get("NO_COLOR"):
         return False
     if os.environ.get("PYCHARM_HOSTED"):
+        # PyCharm run window may not be a true tty; prefer Terminal pane or rich
         return False
     if os.environ.get("CI"):
         return False
     if not sys.stdout.isatty():
         return False
-    if os.name == "nt":
-        return COLORAMA_AVAILABLE
+    return True
     return True
 
 COLOR_ALLOWED = detect_color_support()
@@ -118,7 +117,7 @@ def expected_posterior_entropy(guess: str, possible_answers: List[str], priors: 
 def pretty_feedback_display(pat: Tuple[int, int, int, int, int], letters: str = "") -> str:
     """Return colored or ASCII-feedback display depending on COLOR_ALLOWED."""
     # ASCII fallback
-    if not COLOR_ALLOWED:
+    if not RICH_AVAILABLE:
         out = []
         for i, v in enumerate(pat):
             ch = letters[i] if letters and i < len(letters) else " "
@@ -130,20 +129,21 @@ def pretty_feedback_display(pat: Tuple[int, int, int, int, int], letters: str = 
                 out.append(f"[ ]{ch}")
         return " ".join(out)
 
-    GREEN_BG = "\x1b[42m"
-    YELLOW_BG = "\x1b[43m"
-    GRAY_BG = "\x1b[100m"
-    RESET = "\x1b[0m"
-    out = []
+    # Use rich to render colored cells
+    from rich.text import Text
+    txt = Text()
     for i, v in enumerate(pat):
         ch = letters[i] if letters and i < len(letters) else " "
         if v == 2:
-            out.append(f"{GREEN_BG} {ch} {RESET}")
+            style = "bold white on green"
         elif v == 1:
-            out.append(f"{YELLOW_BG} {ch} {RESET}")
+            style = "bold white on dark_orange3"
         else:
-            out.append(f"{GRAY_BG} {ch} {RESET}")
-    return "".join(out)
+            style = "bold white on grey23"
+        txt.append(f" {ch} ", style=style)
+        txt.append(" ")
+    # return a string that Console.print can render; we'll return the Text object
+    return txt
 
 
 def choose_best_guess(possible_answers: List[str], guess_pool: List[str], priors: Dict[str, float], top_k: int = 200, fixed_letters: Dict[int, str] = None, history: List[Tuple[str, Tuple[int, int, int, int, int]]] = None) -> str:
@@ -369,7 +369,11 @@ def main():
         simulate(answers_path=args.answers, candidates_file=args.candidates, max_answers=args.max)
     else:
         if getattr(args, 'force_color', False):
-            set_color_allowed(True)
+            # if forced, prefer rich if available
+            if RICH_AVAILABLE:
+                pass
+            else:
+                set_color_allowed(True)
         interactive_mode(answers_path=getattr(args, "answers", DEFAULT_ANSWERS), candidates_file=getattr(args, "candidates", DEFAULT_CANDIDATES_FILE))
 
 
