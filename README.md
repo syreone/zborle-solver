@@ -60,4 +60,4 @@ Example: 22001  (2=green, 1=yellow, 0=gray)
 
 Below is an example screenshot showing the web version side-by-side with the
 terminal board produced by this solver.
-(docs/zborle.png)
+![Zborle Solver Screenshot](docs/zborle.png)
