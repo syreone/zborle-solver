@@ -5,6 +5,33 @@ import statistics
 from collections import Counter
 from functools import lru_cache
 from typing import Dict, Iterable, List, Tuple
+import sys
+import os
+try:
+    import colorama
+    colorama.init(autoreset=True)
+    COLORAMA_AVAILABLE = True
+except Exception:
+    colorama = None
+    COLORAMA_AVAILABLE = False
+
+def detect_color_support() -> bool:
+    if os.environ.get("NO_COLOR"):
+        return False
+    if os.environ.get("PYCHARM_HOSTED"):
+        return False
+    if os.environ.get("CI"):
+        return False
+    if not sys.stdout.isatty():
+        return False
+    if os.name == "nt":
+        return COLORAMA_AVAILABLE
+    return True
+
+COLOR_ALLOWED = detect_color_support()
+def set_color_allowed(val: bool):
+    global COLOR_ALLOWED
+    COLOR_ALLOWED = bool(val)
 
 try:
     from generator import load_corpus, build_stats, generate_candidates
@@ -96,6 +123,37 @@ def expected_posterior_entropy(guess: str, possible_answers: List[str], priors: 
                 h -= q * math.log2(q)
         exp_entropy += p_prob * h
     return exp_entropy
+
+
+def pretty_feedback_display(pat: Tuple[int, int, int, int, int], letters: str = "") -> str:
+    """Return colored or ASCII-feedback display depending on COLOR_ALLOWED."""
+    # ASCII fallback
+    if not COLOR_ALLOWED:
+        out = []
+        for i, v in enumerate(pat):
+            ch = letters[i] if letters and i < len(letters) else " "
+            if v == 2:
+                out.append(f"[G]{ch}")
+            elif v == 1:
+                out.append(f"[Y]{ch}")
+            else:
+                out.append(f"[ ]{ch}")
+        return " ".join(out)
+
+    GREEN_BG = "\x1b[42m"
+    YELLOW_BG = "\x1b[43m"
+    GRAY_BG = "\x1b[100m"
+    RESET = "\x1b[0m"
+    out = []
+    for i, v in enumerate(pat):
+        ch = letters[i] if letters and i < len(letters) else " "
+        if v == 2:
+            out.append(f"{GREEN_BG} {ch} {RESET}")
+        elif v == 1:
+            out.append(f"{YELLOW_BG} {ch} {RESET}")
+        else:
+            out.append(f"{GRAY_BG} {ch} {RESET}")
+    return "".join(out)
 
 
 def choose_best_guess(possible_answers: List[str], guess_pool: List[str], priors: Dict[str, float], top_k: int = 200, fixed_letters: Dict[int, str] = None, history: List[Tuple[str, Tuple[int, int, int, int, int]]] = None) -> str:
@@ -424,6 +482,7 @@ def main():
     p_int = sub.add_parser("interactive", help="Run interactive solver")
     p_int.add_argument("--answers", default=DEFAULT_ANSWERS)
     p_int.add_argument("--candidates", default=DEFAULT_CANDIDATES_FILE)
+    p_int.add_argument("--force-color", action="store_true", help="Force-enable ANSI colors in output")
     p_sim = sub.add_parser("simulate", help="Run automatic simulation over answers")
     p_sim.add_argument("--answers", default=DEFAULT_ANSWERS)
     p_sim.add_argument("--candidates", default=DEFAULT_CANDIDATES_FILE)
@@ -433,6 +492,8 @@ def main():
     if args.cmd == "simulate":
         simulate(answers_path=args.answers, candidates_file=args.candidates, max_answers=args.max)
     else:
+        if getattr(args, 'force_color', False):
+            set_color_allowed(True)
         interactive_mode(answers_path=getattr(args, "answers", DEFAULT_ANSWERS), candidates_file=getattr(args, "candidates", DEFAULT_CANDIDATES_FILE))
 
 
