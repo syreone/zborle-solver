@@ -273,6 +273,12 @@ def interactive_mode(answers_path: str = DEFAULT_ANSWERS, candidates_file: str =
                 break
             v = input("Внеси 5 цифри (2/1/0): ").strip()
         pat = tuple(int(ch) for ch in v)
+        # display the colored feedback for the guess
+        rendered = pretty_feedback_display(pat, letters=guess)
+        if RICH_AVAILABLE:
+            _console.print(rendered)
+        else:
+            print(rendered)
         if all(x == 2 for x in pat):
             print("Погодок!")
             break
