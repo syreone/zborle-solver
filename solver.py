@@ -289,7 +289,8 @@ def interactive_mode(answers_path: str = DEFAULT_ANSWERS, candidates_file: str =
         for idx, val in enumerate(pat):
             if val == 2:
                 green_map[idx] = guess[idx]
-        # confirmed feedback already recorded in history above
+        # add confirmed feedback to history so we enforce it when selecting guesses
+        history.append((guess, pat))
 
 
 def simulate(answers_path: str = DEFAULT_ANSWERS, candidates_file: str = DEFAULT_CANDIDATES_FILE, max_answers: int = None):
