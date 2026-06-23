@@ -308,16 +308,6 @@ def simulate(answers_path: str = DEFAULT_ANSWERS, candidates_file: str = DEFAULT
     priors = compute_positional_priors(candidates, answers)
 
     results = []
-    # per-run cache: maps (guess, frozenset_of_possible) -> expected entropy
-    # We use a simple fingerprint: comma-joined answers string (ordered) hashed to keep keys small.
-    from hashlib import sha1
-
-    def fingerprint(possible: List[str]) -> str:
-        key = ",".join(possible)
-        return sha1(key.encode("utf-8")).hexdigest()
-
-    entropy_cache = {}
-
     for target in answers:
         possible = answers[:]
         n = 0
@@ -332,31 +322,7 @@ def simulate(answers_path: str = DEFAULT_ANSWERS, candidates_file: str = DEFAULT
                 def score(w): return sum(pos_freq[i].get(w[i], 0) for i in range(5))
                 guess = sorted(candidates, key=score, reverse=True)[0]
             else:
-                # Use memoization for expected entropy per (guess, possible-set-fingerprint)
-                fp = fingerprint(possible)
-                def cached_expected(g):
-                    key = (g, fp)
-                    if key in entropy_cache:
-                        return entropy_cache[key]
-                    e = expected_posterior_entropy(g, possible, priors)
-                    entropy_cache[key] = e
-                    return e
-
-                # choose_best_guess computes expected_posterior_entropy internally; to reuse cache
-                # we replicate the core loop here with caching to avoid code duplication.
-                # We'll consider the top-K guesses by prior for speed.
-                K = 200
-                guess_pool = candidates[:]
-                if len(guess_pool) > K:
-                    guess_pool = sorted(guess_pool, key=lambda w: priors.get(w, 0.0), reverse=True)[:K]
-                best = None
-                best_score = float('inf')
-                for g in guess_pool:
-                    e = cached_expected(g)
-                    if e < best_score:
-                        best_score = e
-                        best = g
-                guess = best
+                guess = choose_best_guess(possible, candidates, priors, fixed_letters=green_map, history=history)
             if guess == target:
                 results.append(n)
                 break
@@ -376,75 +342,13 @@ def simulate(answers_path: str = DEFAULT_ANSWERS, candidates_file: str = DEFAULT
                 break
 
     print("Games:", len(results))
-    print("Avg guesses:", statistics.mean(results) if results else float('nan'))
-    print("Median guesses:", statistics.median(results) if results else float('nan'))
-    print("Max guesses:", max(results) if results else float('nan'))
+    print("Avg guesses:", statistics.mean(results))
+    print("Median guesses:", statistics.median(results))
+    print("Max guesses:", max(results))
     hist = Counter(results)
     print("Histogram (guesses -> count):")
     for k in sorted(hist):
         print(f"  {k}: {hist[k]}")
-
-
-def simulate_with_csv(answers_path: str = DEFAULT_ANSWERS, candidates_file: str = DEFAULT_CANDIDATES_FILE, max_answers: int = None, out_csv: str = None):
-    """Run simulate and also write per-answer results to CSV if out_csv is provided."""
-    if out_csv is None:
-        simulate(answers_path=answers_path, candidates_file=candidates_file, max_answers=max_answers)
-        return
-    if load_corpus is None:
-        raise RuntimeError("generator module not available.")
-    answers = load_corpus(answers_path)
-    if max_answers:
-        answers = answers[:max_answers]
-    try:
-        with open(candidates_file, "r", encoding="utf-8") as f:
-            candidates = [l.strip() for l in f if l.strip()]
-    except FileNotFoundError:
-        stats = build_stats(answers)
-        candidates = generate_candidates(stats)
-
-    priors = compute_positional_priors(candidates, answers)
-
-    import csv
-    rows = []
-    for target in answers:
-        possible = answers[:]
-        n = 0
-        green_map = {}
-        history: List[Tuple[str, Tuple[int, int, int, int, int]]] = []
-        while True:
-            n += 1
-            if len(possible) == 1:
-                guess = possible[0]
-            elif n == 1:
-                pos_freq = compute_positional_freq(answers)
-                def score(w): return sum(pos_freq[i].get(w[i], 0) for i in range(5))
-                guess = sorted(candidates, key=score, reverse=True)[0]
-            else:
-                guess = choose_best_guess(possible, candidates, priors, fixed_letters=green_map, history=history)
-            if guess == target:
-                rows.append((target, n))
-                break
-            pat = feedback(guess, target)
-            for idx, val in enumerate(pat):
-                if val == 2:
-                    green_map[idx] = guess[idx]
-            history.append((guess, pat))
-            possible = filter_answers(possible, guess, pat)
-            if not possible:
-                rows.append((target, 999))
-                break
-
-    # write csv
-    with open(out_csv, "w", newline='', encoding="utf-8") as f:
-        w = csv.writer(f)
-        w.writerow(["answer", "guesses"])
-        w.writerows(rows)
-
-    guesses = [r[1] for r in rows]
-    print("Wrote", len(rows), "rows to", out_csv)
-    print("Avg guesses:", statistics.mean(guesses) if guesses else float('nan'))
-    print("Median guesses:", statistics.median(guesses) if guesses else float('nan'))
-    print("Max guesses:", max(guesses) if guesses else float('nan'))
 
 
 def main():
