@@ -43,10 +43,7 @@ python cli_build.py --corpus words-mk-main/all --out candidates.txt
 ### 2. Run the interactive solver
 
 ```bash
-python solver.py interactive \
-  --answers    words-mk-main/all \
-  --candidates candidates.txt \
-  --force-color
+python solver.py interactive --answers words-mk-main/all --candidates candidates.txt --force-color
 ```
 
 ### Solver workflow
@@ -62,7 +59,5 @@ Example: 22001  (2=green, 1=yellow, 0=gray)
 ### Example screenshot
 
 Below is an example screenshot showing the web version side-by-side with the
-terminal board produced by this solver. Save your example image at `docs/example.png`
-and it will render on GitHub.
-
-![Zborle web + terminal example](docs/example.png)
+terminal board produced by this solver.
+(docs/zbprle.png)
