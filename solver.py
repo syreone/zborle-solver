@@ -264,6 +264,28 @@ def interactive_mode(answers_path: str = DEFAULT_ANSWERS, candidates_file: str =
         print(f"Погоди: {guess}")
 
         if len(possible) == 1 and guess == possible[0]:
+            # display full board (previous guesses + final all-green row)
+            final_pat = (2, 2, 2, 2, 2)
+            def print_board(hist: List[Tuple[str, Tuple[int,int,int,int,int]]], final: Tuple[str, Tuple[int,int,int,int,int]] = None):
+                # Render rows using rich Table when available, otherwise simple lines
+                rows = []
+                for g, p in hist:
+                    rows.append(pretty_feedback_display(p, letters=g))
+                if final:
+                    rows.append(pretty_feedback_display(final[1], letters=final[0]))
+
+                if RICH_AVAILABLE:
+                    from rich.table import Table
+                    tbl = Table(show_header=False, box=None, pad_edge=False)
+                    tbl.add_column()
+                    for r in rows:
+                        tbl.add_row(r)
+                    _console.print(tbl)
+                else:
+                    for r in rows:
+                        print(r)
+
+            print_board(history, final=(guess, final_pat))
             print("Го погодивте зборот!")
             break
 
@@ -281,6 +303,23 @@ def interactive_mode(answers_path: str = DEFAULT_ANSWERS, candidates_file: str =
         else:
             print(rendered)
         if all(x == 2 for x in pat):
+            # add this final correct guess to history and print full board
+            history.append((guess, pat))
+            # print full board
+            def print_board(hist: List[Tuple[str, Tuple[int,int,int,int,int]]]):
+                rows = [pretty_feedback_display(p, letters=g) for g, p in hist]
+                if RICH_AVAILABLE:
+                    from rich.table import Table
+                    tbl = Table(show_header=False, box=None, pad_edge=False)
+                    tbl.add_column()
+                    for r in rows:
+                        tbl.add_row(r)
+                    _console.print(tbl)
+                else:
+                    for r in rows:
+                        print(r)
+
+            print_board(history)
             print("Погодок!")
             break
 
