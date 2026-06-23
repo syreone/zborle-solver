@@ -137,8 +137,8 @@ def pretty_feedback_display(pat: Tuple[int, int, int, int, int], letters: str = 
         if v == 2:
             style = "bold white on green"
         elif v == 1:
-            # use a brighter yellow background for better visibility
-            style = "bold black on yellow"
+            # brighter yellow background; keep white text for consistency
+            style = "bold white on yellow"
         else:
             style = "bold white on grey23"
         txt.append(f" {ch} ", style=style)
