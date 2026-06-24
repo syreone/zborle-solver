@@ -1,5 +1,6 @@
 import argparse
 import math
+import random
 import statistics
 from collections import Counter
 from functools import lru_cache
@@ -23,7 +24,6 @@ def detect_color_support() -> bool:
         return False
     if not sys.stdout.isatty():
         return False
-    return True
     return True
 
 COLOR_ALLOWED = detect_color_support()
@@ -224,7 +224,8 @@ def interactive_mode(answers_path: str = DEFAULT_ANSWERS, candidates_file: str =
     pos_freq = compute_positional_freq(answers)
     def positional_score(w):
         return sum(pos_freq[i].get(w[i], 0) for i in range(5))
-    top_first = sorted(candidates, key=positional_score, reverse=True)[:10]
+    top_pool = sorted(candidates, key=positional_score, reverse=True)[:30]
+    top_first = random.sample(top_pool, min(10, len(top_pool)))
 
     possible = answers[:]
     first_move = True
