@@ -10,6 +10,12 @@ An entropy-based solver for [Zborle](https://zborle.mk), the Macedonian Wordle v
 - **Rich terminal UI** — colour-coded board (green / yellow / gray) rendered with `rich`
 - **Batch simulation** — harness for evaluating solver performance across the full answer set
 
+### Example screenshot
+
+Below is an example screenshot showing the web version side-by-side with the
+terminal board produced by this solver.
+![Zborle Solver GIF](docs/zborle.gif)
+
 ## Requirements
 
 - Python 3.8+
@@ -56,8 +62,4 @@ python solver.py interactive --answers words-mk-main/all --candidates candidates
 Example: 22001  (2=green, 1=yellow, 0=gray)
 ```
 
-### Example screenshot
 
-Below is an example screenshot showing the web version side-by-side with the
-terminal board produced by this solver.
-![Zborle Solver Screenshot](docs/zborle.gif)
