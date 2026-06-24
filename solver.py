@@ -297,32 +297,29 @@ def interactive_mode(answers_path: str = DEFAULT_ANSWERS, candidates_file: str =
                 break
             v = input("Внеси 5 цифри (2/1/0): ").strip()
         pat = tuple(int(ch) for ch in v)
-        # display the colored feedback for the guess
+        if all(x == 2 for x in pat):
+            # winning guess: add to history and print the full board only
+            history.append((guess, pat))
+            rows = [pretty_feedback_display(p, letters=g) for g, p in history]
+            if RICH_AVAILABLE:
+                from rich.table import Table
+                tbl = Table(show_header=False, box=None, pad_edge=False)
+                tbl.add_column()
+                for r in rows:
+                    tbl.add_row(r)
+                _console.print(tbl)
+            else:
+                for r in rows:
+                    print(r)
+            print("Погодок!")
+            break
+
+        # display the colored feedback for the guess (non-winning)
         rendered = pretty_feedback_display(pat, letters=guess)
         if RICH_AVAILABLE:
             _console.print(rendered)
         else:
             print(rendered)
-        if all(x == 2 for x in pat):
-            # add this final correct guess to history and print full board
-            history.append((guess, pat))
-            # print full board
-            def print_board(hist: List[Tuple[str, Tuple[int,int,int,int,int]]]):
-                rows = [pretty_feedback_display(p, letters=g) for g, p in hist]
-                if RICH_AVAILABLE:
-                    from rich.table import Table
-                    tbl = Table(show_header=False, box=None, pad_edge=False)
-                    tbl.add_column()
-                    for r in rows:
-                        tbl.add_row(r)
-                    _console.print(tbl)
-                else:
-                    for r in rows:
-                        print(r)
-
-            print_board(history)
-            print("Погодок!")
-            break
 
         # filter possible answers according to entered feedback
         new_possible = filter_answers(possible, guess, pat)
