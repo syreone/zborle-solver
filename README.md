@@ -12,7 +12,7 @@ An entropy-based solver for [Zborle](https://zborle.mk), the Macedonian Wordle v
 
 ### Example
 
-Below is an example screenshot showing the web version side-by-side with the
+Below is an example GIF showing the web version side-by-side with the
 terminal board produced by this solver.
 ![Zborle Solver GIF](docs/zborle.gif)
 
