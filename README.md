@@ -10,7 +10,7 @@ An entropy-based solver for [Zborle](https://zborle.mk), the Macedonian Wordle v
 - **Rich terminal UI** — colour-coded board (green / yellow / gray) rendered with `rich`
 - **Batch simulation** — harness for evaluating solver performance across the full answer set
 
-### Example screenshot
+### Example
 
 Below is an example screenshot showing the web version side-by-side with the
 terminal board produced by this solver.
